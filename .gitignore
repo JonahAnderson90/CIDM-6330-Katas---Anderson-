@@ -7,4 +7,5 @@ __pycache__/
 kata-01-files/output/
 kata-01-files/logs/
 *.db
+kata-02-sqlite/*.db
 
