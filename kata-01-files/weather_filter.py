@@ -36,6 +36,26 @@ def read_csv_rows(input_path: Path) -> tuple[list[dict[str, str]], list[str]]:
         rows = list(reader)
     return rows, fieldnames
 
+def read_json_rows(input_path: Path) -> tuple[list[dict[str, str]], list[str]]:
+    import json
+    with input_path.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+        if isinstance(data, dict):
+            rows = data.get("records", [])
+        else:
+            rows = data
+        if rows:
+            fieldnames = list(rows[0].keys())
+        else:
+            fieldnames = []
+    return rows, fieldnames
+
+def read_input_rows(input_path: Path) -> tuple[list[dict[str, str]], list[str]]:
+    if input_path.suffix.lower() == ".json":
+        return read_json_rows(input_path)
+    else:
+        return read_csv_rows(input_path)
+
 
 def filter_rows(
     rows: list[dict[str, str]],
@@ -76,7 +96,7 @@ def main() -> int:
         append_log(log_path, msg)
         return 2
 
-    rows, fieldnames = read_csv_rows(input_path)
+    rows, fieldnames = read_input_rows(input_path)
     kept = filter_rows(rows, args.column, args.threshold)
     write_csv_rows(output_path, fieldnames, kept)
 

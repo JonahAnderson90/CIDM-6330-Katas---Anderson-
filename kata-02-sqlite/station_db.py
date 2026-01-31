@@ -33,6 +33,10 @@ def create_tables(conn: sqlite3.Connection) -> None:
     """)
 
     conn.commit()
+
+    # Stretch: Create index on observations.station_id
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_observations_station_id ON observations(station_id)")
+    conn.commit()
 def seed_stations(conn: sqlite3.Connection) -> None:
     """Insert sample stations."""
     cursor = conn.cursor()
@@ -78,3 +82,49 @@ def get_station_observations(conn: sqlite3.Connection) -> List[Tuple]:
         ORDER BY o.date
     """)
     return cursor.fetchall()
+
+    def update_station(conn: sqlite3.Connection, station_id: str, name: str = None, state: str = None) -> None:
+        """Update a station's name and/or state by station_id."""
+        cursor = conn.cursor()
+        if name is not None:
+            cursor.execute("UPDATE stations SET name = ? WHERE station_id = ?", (name, station_id))
+        if state is not None:
+            cursor.execute("UPDATE stations SET state = ? WHERE station_id = ?", (state, station_id))
+        conn.commit()
+
+    def delete_station(conn: sqlite3.Connection, station_id: str) -> None:
+        """Delete a station by station_id."""
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM stations WHERE station_id = ?", (station_id,))
+        conn.commit()
+
+    def update_observation(conn: sqlite3.Connection, obs_id: int, temp_c: float = None, date: str = None) -> None:
+        """Update an observation's temperature and/or date by obs_id."""
+        cursor = conn.cursor()
+        if temp_c is not None:
+            cursor.execute("UPDATE observations SET temp_c = ? WHERE obs_id = ?", (temp_c, obs_id))
+        if date is not None:
+            cursor.execute("UPDATE observations SET date = ? WHERE obs_id = ?", (date, obs_id))
+        conn.commit()
+
+    def delete_observation(conn: sqlite3.Connection, obs_id: int) -> None:
+        """Delete an observation by obs_id."""
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM observations WHERE obs_id = ?", (obs_id,))
+        conn.commit()
+
+    def explain_query_plan_for_join(conn: sqlite3.Connection) -> list:
+        """Return EXPLAIN QUERY PLAN output for the join query."""
+        cursor = conn.cursor()
+        cursor.execute("""
+            EXPLAIN QUERY PLAN
+            SELECT
+                s.station_id,
+                s.name,
+                o.date,
+                o.temp_c
+            FROM stations s
+            JOIN observations o ON s.station_id = o.station_id
+            ORDER BY o.date
+        """)
+        return cursor.fetchall()
